@@ -10,23 +10,23 @@ import jakarta.faces.validator.ValidatorException;
 import java.math.BigDecimal;
 
 /**
- * Custom JSF validator for transaction amount validation
- * Validates transaction amounts within business rules limits
+ * Validador JSF personalizado para la validacion del monto de la transaccion
+ * Valida los montos de las transacciones dentro de los limites de las reglas de negocio
  */
 @FacesValidator("amountValidator")
 public class AmountValidator implements Validator<BigDecimal> {
-    
+
     private static final BigDecimal MIN_AMOUNT = new BigDecimal("-10000.00");
     private static final BigDecimal MAX_AMOUNT = new BigDecimal("10000.00");
     private static final BigDecimal ZERO = BigDecimal.ZERO;
-    
+
     @Override
     public void validate(FacesContext context, UIComponent component, BigDecimal value) throws ValidatorException {
         if (value == null) {
-            return; // Let required validation handle null values
+            return; // Dejar que la validacion de requerido maneje los valores nulos
         }
-        
-        // Check if amount is within valid range
+
+        // Comprueba si el monto esta dentro del rango valido
         if (value.compareTo(MIN_AMOUNT) < 0) {
             FacesMessage message = new FacesMessage(
                 FacesMessage.SEVERITY_ERROR,
@@ -35,17 +35,17 @@ public class AmountValidator implements Validator<BigDecimal> {
             );
             throw new ValidatorException(message);
         }
-        
+
         if (value.compareTo(MAX_AMOUNT) > 0) {
             FacesMessage message = new FacesMessage(
                 FacesMessage.SEVERITY_ERROR,
-                "Error de Rango", 
+                "Error de Rango",
                 "El monto no puede ser mayor a 10,000.00"
             );
             throw new ValidatorException(message);
         }
-        
-        // Check if amount is zero (business rule - zero amounts not allowed)
+
+        // Comprueba si el monto es cero (regla de negocio - no se permiten montos cero)
         if (value.compareTo(ZERO) == 0) {
             FacesMessage message = new FacesMessage(
                 FacesMessage.SEVERITY_ERROR,
@@ -54,8 +54,8 @@ public class AmountValidator implements Validator<BigDecimal> {
             );
             throw new ValidatorException(message);
         }
-        
-        // Check decimal places (should not exceed 2)
+
+        // Comprueba los decimales (no deben exceder 2)
         if (value.scale() > 2) {
             FacesMessage message = new FacesMessage(
                 FacesMessage.SEVERITY_ERROR,
@@ -64,26 +64,25 @@ public class AmountValidator implements Validator<BigDecimal> {
             );
             throw new ValidatorException(message);
         }
-        
-        // Additional business rules can be added here
-        // For example, check for suspicious amounts or patterns
+
+        // Se pueden agregar reglas de negocio adicionales aqui
+        // Por ejemplo, comprobar si hay montos o patrones sospechosos
         validateBusinessRules(value);
     }
-    
+
     /**
-     * Additional business rule validations
+     * Validaciones de reglas de negocio adicionales
      */
     private void validateBusinessRules(BigDecimal amount) throws ValidatorException {
-        // Example: Warn for large single transactions (could be suspicious)
+        // Ejemplo: Advertir sobre transacciones unicas grandes (podrian ser sospechosas)
         BigDecimal largeTransactionThreshold = new BigDecimal("5000.00");
         if (amount.abs().compareTo(largeTransactionThreshold) > 0) {
-            // This is just a warning, not an error, so we could log it but not block
-            // For demonstration, we'll allow it but could add additional checks
-            // LOGGER.info("Large transaction amount: " + amount);
+            // Esto es solo una advertencia, no un error, por lo que podriamos registrarlo pero no bloquearlo
+            // Para la demostracion, lo permitiremos pero podriamos agregar comprobaciones adicionales
         }
-        
-        // Example: Block specific patterns (like amounts ending in .99)
-        // This is just for demonstration - in real world this might not make sense
+
+        // Ejemplo: Bloquear patrones especificos (como montos que terminan en .99)
+        // Esto es solo para demostracion - en el mundo real esto podria no tener sentido
         String amountStr = amount.toPlainString();
         if (amountStr.endsWith(".99") && amount.abs().compareTo(new BigDecimal("100")) > 0) {
             FacesMessage message = new FacesMessage(
@@ -91,7 +90,7 @@ public class AmountValidator implements Validator<BigDecimal> {
                 "Advertencia",
                 "Montos que terminan en .99 por encima de 100 pueden requerir aprobación adicional"
             );
-            // This is just a warning, not throwing exception
+            // Esto es solo una advertencia, no se lanza una excepcion
             FacesContext.getCurrentInstance().addMessage(null, message);
         }
     }

@@ -45,7 +45,7 @@ public class LoginBean implements Serializable {
             return "login-success";
         } else {
             String message = getMessageFromBundle("login.failed");
-            FacesContext.getCurrentInstance().addMessage(null, 
+            FacesContext.getCurrentInstance().addMessage(null,
                 new FacesMessage(FacesMessage.SEVERITY_ERROR, message, null));
             return "login-failure";
         }
@@ -55,22 +55,22 @@ public class LoginBean implements Serializable {
         loggedIn = false;
         FacesContext context = FacesContext.getCurrentInstance();
         ExternalContext externalContext = context.getExternalContext();
-        
-        // Invalidate the session
+
+        // Invalida la sesion
         externalContext.invalidateSession();
-        
-        // Redirect to login page with a parameter to show logout message
+
+        // Redirige a la pagina de inicio de sesion con un parametro para mostrar el mensaje de cierre de sesion
         try {
             externalContext.redirect(externalContext.getRequestContextPath() + "/login.xhtml?faces-redirect=true&logout=true");
             context.responseComplete(); // Prevent JSF from performing a server-side forward
         } catch (IOException e) {
-            // Log the error
-            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, 
+            // Registra el error
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
                 "Error during logout", "An error occurred while trying to log out."));
         }
-        return null; // Navigation is handled by the redirect
+        return null; // La navegacion es manejada por la redireccion
     }
-    
+
     private String getMessageFromBundle(String key) {
         FacesContext context = FacesContext.getCurrentInstance();
         ResourceBundle bundle = context.getApplication()

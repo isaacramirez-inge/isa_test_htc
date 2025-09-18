@@ -21,23 +21,23 @@ public class AuthenticationFilter implements Filter {
 
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
-        
-        // Check if the user is logged in using the injected bean
+
+        // Verifica si el usuario ha iniciado sesion utilizando el bean inyectado
         if (loginBean == null || !loginBean.isLoggedIn()) {
             res.sendRedirect(req.getContextPath() + "/login.xhtml");
         } else {
-            // User is logged in, so just continue the request
+            // El usuario ha iniciado sesion, por lo que simplemente continua con la solicitud
             chain.doFilter(request, response);
         }
     }
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        // Not used
+        // No utilizado
     }
 
     @Override
     public void destroy() {
-        // Not used
+        // No utilizado
     }
 }

@@ -24,9 +24,7 @@ public class GlobalExceptionHandler {
     
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     
-    /**
-     * Handle custom TransactionException
-     */
+    // Maneja la excepcion personalizada TransactionException
     @ExceptionHandler(TransactionException.class)
     public ResponseEntity<ApiResponse<Object>> handleTransactionException(TransactionException e) {
         logger.error("Transaction exception: {} [{}]", e.getMessage(), e.getErrorCode());
@@ -37,9 +35,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(response);
     }
     
-    /**
-     * Handle validation errors from @Valid annotations
-     */
+    // Maneja errores de validacion de las anotaciones @Valid
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationException(MethodArgumentNotValidException e) {
         logger.error("Validation exception: {}", e.getMessage());
@@ -55,9 +51,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
     
-    /**
-     * Handle validation errors from @Validated annotations
-     */
+    // Maneja errores de validacion de las anotaciones @Validated
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Object>> handleConstraintViolationException(ConstraintViolationException e) {
         logger.error("Constraint violation exception: {}", e.getMessage());
@@ -73,9 +67,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
     
-    /**
-     * Handle bind exceptions (form data binding errors)
-     */
+    // Maneja excepciones de enlace (errores de enlace de datos de formulario)
     @ExceptionHandler(BindException.class)
     public ResponseEntity<ApiResponse<Object>> handleBindException(BindException e) {
         logger.error("Bind exception: {}", e.getMessage());
@@ -91,9 +83,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
     
-    /**
-     * Handle method argument type mismatch (e.g., string passed where number expected)
-     */
+    // Maneja el desajuste de tipo de argumento del metodo (ej, se pasa una cadena donde se esperaba un numero)
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Object>> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {
         logger.error("Type mismatch exception: {}", e.getMessage());
@@ -105,9 +95,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
     
-    /**
-     * Handle JSON parsing errors
-     */
+    // Maneja errores de analisis JSON
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Object>> handleMessageNotReadableException(HttpMessageNotReadableException e) {
         logger.error("Message not readable exception: {}", e.getMessage());
@@ -121,9 +109,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
     
-    /**
-     * Handle IllegalArgumentException
-     */
+    // Maneja IllegalArgumentException
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Object>> handleIllegalArgumentException(IllegalArgumentException e) {
         logger.error("Illegal argument exception: {}", e.getMessage());
@@ -132,9 +118,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
     
-    /**
-     * Handle all other exceptions
-     */
+    // Maneja todas las demas excepciones
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception e) {
         logger.error("Unexpected exception: ", e);
@@ -143,9 +127,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
     
-    /**
-     * Determine HTTP status code based on error code
-     */
+    // Determina el codigo de estado HTTP basado en el codigo de error
     private HttpStatus determineHttpStatus(String errorCode) {
         return switch (errorCode) {
             case "CLIENT_NOT_FOUND", "ACCOUNT_NOT_FOUND" -> HttpStatus.NOT_FOUND;

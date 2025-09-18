@@ -22,53 +22,48 @@ import java.util.UUID;
 
 @Service
 public class TransactionService {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
-    
+
     @Autowired
     private ClientRepository clientRepository;
-    
+
     @Autowired
     private BalanceRepository balanceRepository;
-    
+
     @Autowired
     private BalanceTransactionRepository balanceTransactionRepository;
-    
+
     @Autowired
     private KafkaProducerService kafkaProducerService;
-    
+
     /**
-     * Process a transaction request
-     * This method handles the complete transaction flow:
-     * 1. Find the client
-     * 2. Find or create the balance/account
-     * 3. Validate the transaction (for debits)
-     * 4. Update the balance
-     * 5. Save the transaction record
-     * 6. Send result to Kafka
+     * Procesa una solicitud de transaccion
+     * Este metodo maneja el flujo completo de la transaccion:
+     * 1. Encuentra al cliente
+     * 2. Encuentra o crea el saldo/cuenta
+     * 3. Valida la transaccion (para debitos)
+     * 4. Actualiza el saldo
+     * 5. Guarda el registro de la transaccion
+     * 6. Envia el resultado a Kafka
      */
     @Transactional
     public TransactionResponse processTransaction(TransactionRequest request) {
         String transactionId = generateTransactionId();
-        logger.info("Processing transaction {} for client {} account {} amount {}", 
+        logger.info("Processing transaction {} for client {} account {} amount {}",
                    transactionId, request.getClientIdentification(), request.getAccountNumber(), request.getAmount());
-        
+
         try {
-            // Step 1: Find or create the client
             Client client = findOrCreateClient(request.getClientIdentification());
-            
-            // Step 2: Find or create the balance
+
             Balance balance = findOrCreateBalance(client, request.getAccountNumber(), request.getAmount());
-            
-            // Step 3: Validate transaction (for debits)
+
             validateTransaction(request, balance);
-            
-            // Step 4: Update balance
+
             BigDecimal newBalanceAmount = balance.getCurrentBalance().add(request.getAmount());
             balance.setCurrentBalance(newBalanceAmount);
             balanceRepository.save(balance);
-            
-            // Step 5: Save transaction record
+
             BigDecimal balanceBefore = balance.getCurrentBalance().subtract(request.getAmount());
             BalanceTransaction transaction = new BalanceTransaction(
                 transactionId,
@@ -79,13 +74,12 @@ public class TransactionService {
                 newBalanceAmount
             );
             balanceTransactionRepository.save(transaction);
-            
-            // Step 6: Send success event to Kafka (async)
+
             sendSuccessEventAsync(transactionId, client.getId(), request, newBalanceAmount);
-            
+
             logger.info("Transaction {} completed successfully. New balance: {}", transactionId, newBalanceAmount);
             return TransactionResponse.accepted(transactionId);
-            
+
         } catch (TransactionException e) {
             logger.error("Transaction {} failed: {}", transactionId, e.getMessage());
             sendFailureEventAsync(transactionId, null, request, e);
@@ -97,7 +91,7 @@ public class TransactionService {
             throw transactionException;
         }
     }
-    
+
     private Client findOrCreateClient(String clientIdentification) {
         return clientRepository.findByClientIdentification(clientIdentification)
                 .orElseGet(() -> {
@@ -109,72 +103,72 @@ public class TransactionService {
                     return clientRepository.save(client);
                 });
     }
-    
+
     private Balance findOrCreateBalance(Client client, String accountNumber, BigDecimal initialAmount) {
         return balanceRepository.findByClientAndAccountNumber(client, accountNumber)
                 .orElseGet(() -> {
                     logger.info("Creating new account {} for client {}", accountNumber, client.getId());
-                    
-                    // For account creation, we use the transaction amount as initial balance
-                    // But we need to ensure it's not a debit that would create a negative balance
+
+                    // Para la creacion de la cuenta usamos el monto de la transaccion como saldo inicial
+                    // Pero debemos asegurarnos de que no sea un debito que cree un saldo negativo
                     BigDecimal initialBalance = initialAmount.compareTo(BigDecimal.ZERO) >= 0 ? initialAmount : BigDecimal.ZERO;
-                    
+
                     Balance newBalance = new Balance(accountNumber, initialBalance, client);
                     return balanceRepository.save(newBalance);
                 });
     }
-    
+
     private void validateTransaction(TransactionRequest request, Balance balance) {
-        // For debit transactions, check sufficient funds
+        // Para transacciones de debito, verifica que haya fondos suficientes
         if (request.getAmount().compareTo(BigDecimal.ZERO) < 0) {
             BigDecimal requestedDebitAmount = request.getAmount().abs();
             if (balance.getCurrentBalance().compareTo(requestedDebitAmount) < 0) {
                 throw new TransactionException(
-                    String.format("Insufficient funds in account %s. Requested: %s, Available: %s", 
+                    String.format("Fondos insuficientes en la cuenta %s. Solicitado: %s, Disponible: %s",
                                  request.getAccountNumber(), requestedDebitAmount, balance.getCurrentBalance()),
                     "INSUFFICIENT_FUNDS"
                 );
             }
         }
     }
-    
+
     @Async
     private void sendSuccessEventAsync(String transactionId, Long clientId, TransactionRequest request, BigDecimal newBalance) {
         try {
             TransactionResultEvent event = TransactionResultEvent.completed(
-                transactionId, 
-                clientId, 
-                request.getAccountNumber(), 
-                request.getAmount(), 
+                transactionId,
+                clientId,
+                request.getAccountNumber(),
+                request.getAmount(),
                 newBalance
             );
             kafkaProducerService.sendTransactionResult(event);
             logger.debug("Success event sent for transaction {}", transactionId);
         } catch (Exception e) {
             logger.error("Failed to send success event for transaction {}: {}", transactionId, e.getMessage());
-            // We don't throw here to avoid rolling back the successful transaction
+            // No lanzamos la excepcion aqui para evitar revertir la transaccion exitosa
         }
     }
-    
+
     @Async
     private void sendFailureEventAsync(String transactionId, Long clientId, TransactionRequest request, TransactionException exception) {
         try {
             TransactionResultEvent event;
             switch (exception.getErrorCode()) {
                 case "CLIENT_NOT_FOUND":
-                    event = TransactionResultEvent.clientNotFound(transactionId, clientId, 
+                    event = TransactionResultEvent.clientNotFound(transactionId, clientId,
                                                                 request.getAccountNumber(), request.getAmount());
                     break;
                 case "INSUFFICIENT_FUNDS":
-                    event = TransactionResultEvent.insufficientFunds(transactionId, clientId, 
+                    event = TransactionResultEvent.insufficientFunds(transactionId, clientId,
                                                                    request.getAccountNumber(), request.getAmount());
                     break;
                 case "VALIDATION_ERROR":
-                    event = TransactionResultEvent.validationError(transactionId, clientId, 
+                    event = TransactionResultEvent.validationError(transactionId, clientId,
                                                                  request.getAccountNumber(), request.getAmount(), exception.getMessage());
                     break;
                 default:
-                    event = TransactionResultEvent.systemError(transactionId, clientId, 
+                    event = TransactionResultEvent.systemError(transactionId, clientId,
                                                              request.getAccountNumber(), request.getAmount(), exception.getMessage());
                     break;
             }
@@ -184,12 +178,12 @@ public class TransactionService {
             logger.error("Failed to send failure event for transaction {}: {}", transactionId, e.getMessage());
         }
     }
-    
+
     private String generateTransactionId() {
         return "txn_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
     }
-    
-    // Helper methods for testing and monitoring
+
+    // Metodos auxiliares para pruebas y monitoreo
     public Balance getBalance(String clientIdentification, String accountNumber) {
         Client client = clientRepository.findByClientIdentification(clientIdentification).orElse(null);
         if (client == null) {
@@ -198,7 +192,7 @@ public class TransactionService {
         return balanceRepository.findByClientIdAndAccountNumber(client.getId(), accountNumber)
                 .orElse(null);
     }
-    
+
     public java.util.List<BalanceTransaction> getTransactionHistory(Long clientId, String accountNumber) {
         return balanceTransactionRepository.findByClientIdAndAccountNumberOrderByCreatedAtDesc(clientId, accountNumber);
     }

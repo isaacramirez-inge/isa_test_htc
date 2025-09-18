@@ -8,24 +8,23 @@ import jakarta.faces.validator.Validator;
 import jakarta.faces.validator.ValidatorException;
 
 /**
- * Custom JSF validator for account number format validation
- * Validates that account number is between 5 and 25 characters
+ * Validador JSF personalizado para la validacion del formato del numero de cuenta
+ * Valida que el numero de cuenta tenga entre 5 y 25 caracteres
  */
 @FacesValidator("accountNumberValidator")
 public class AccountNumberValidator implements Validator<String> {
-    
+
     private static final int MIN_LENGTH = 5;
     private static final int MAX_LENGTH = 25;
-    
+
     @Override
     public void validate(FacesContext context, UIComponent component, String value) throws ValidatorException {
         if (value == null || value.trim().isEmpty()) {
-            return; // Let required validation handle empty values
+            return; // Dejar que la validacion de requerido maneje los valores vacios
         }
-        
+
         String accountNumber = value.trim();
-        
-        // Check length
+
         if (accountNumber.length() < MIN_LENGTH) {
             FacesMessage message = new FacesMessage(
                 FacesMessage.SEVERITY_ERROR,
@@ -34,7 +33,7 @@ public class AccountNumberValidator implements Validator<String> {
             );
             throw new ValidatorException(message);
         }
-        
+
         if (accountNumber.length() > MAX_LENGTH) {
             FacesMessage message = new FacesMessage(
                 FacesMessage.SEVERITY_ERROR,

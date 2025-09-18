@@ -16,8 +16,8 @@ import java.math.BigDecimal;
 import java.util.logging.Logger;
 
 /**
- * View-scoped managed bean for handling transaction form operations
- * This bean manages the state and actions of the transaction form
+ * Bean administrado de ambito de vista para manejar las operaciones del formulario de transacciones
+ * Este bean gestiona el estado y las acciones del formulario de transacciones
  */
 @Named("transactionBean")
 @ViewScoped
@@ -27,14 +27,14 @@ public class TransactionBean implements Serializable {
     private static final Logger LOGGER = Logger.getLogger(TransactionBean.class.getName());
     
     @Inject
-    TransactionRestClient restClient; // Package-private for testing
+    TransactionRestClient restClient; // Paquete-privado para pruebas
     
-    // Form fields
+    // Campos del formulario
     private String clientIdentification;
     private String accountNumber;
     private BigDecimal amount;
     
-    // UI state management
+    // Gestion del estado de la UI
     private boolean processing = false;
     private boolean showResult = false;
     private boolean transactionSuccess = false;
@@ -50,16 +50,16 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Process the transaction - validates form and calls API
+     * Procesa la transaccion - valida el formulario y llama a la API
      */
     public void processTransaction() {
         LOGGER.info("=== Procesamiento de transaccion iniciado ===");
         
         try {
-            // Note: No need to clear messages manually - JSF handles this
+            // Nota: No es necesario limpiar los mensajes manualmente - JSF se encarga de esto
             LOGGER.info("Iniciando procesamiento de formulario");
             
-            // Validate form fields
+            // Valida los campos del formulario
             LOGGER.info("A punto de llamar validateForm()");
             boolean isValid = false;
             try {
@@ -100,7 +100,7 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Validate form fields and show inline errors
+     * Valida los campos del formulario y muestra errores en linea
      */
     private boolean validateForm() {
         LOGGER.info("Iniciando validacion de formulario");
@@ -111,7 +111,7 @@ public class TransactionBean implements Serializable {
         boolean isValid = true;
         FacesContext context = FacesContext.getCurrentInstance();
         
-        // Validate client identification
+        // Valida la identificacion del cliente
         if (clientIdentification == null || clientIdentification.trim().isEmpty()) {
             LOGGER.warning("Identificacion de cliente esta vacia");
             context.addMessage("transactionForm:clientId", 
@@ -119,7 +119,7 @@ public class TransactionBean implements Serializable {
             isValid = false;
         }
         
-        // Validate account number
+        // Valida el numero de cuenta
         if (accountNumber == null || accountNumber.trim().isEmpty()) {
             LOGGER.warning("Numero de cuenta esta vacio");
             context.addMessage("transactionForm:accountNum", 
@@ -132,7 +132,7 @@ public class TransactionBean implements Serializable {
             isValid = false;
         }
         
-        // Validate amount
+        // Valida el monto
         if (amount == null) {
             LOGGER.warning("Monto es nulo");
             context.addMessage("transactionForm:amount", 
@@ -150,7 +150,7 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Submit the transaction to the backend API
+     * Envia la transaccion a la API del backend
      */
     private void submitTransaction() {
         LOGGER.info("=== Envio de transaccion iniciado ===");
@@ -160,7 +160,7 @@ public class TransactionBean implements Serializable {
             processing = true;
             showResult = false;
             
-            // Check if restClient is injected
+            // Verifica si restClient esta inyectado
             if (restClient == null) {
                 LOGGER.severe("RestClient es nulo - fallo la inyeccion CDI");
                 throw new IllegalStateException("RestClient no está inicializado");
@@ -168,23 +168,23 @@ public class TransactionBean implements Serializable {
             
             LOGGER.info("RestClient disponible, URL base: " + restClient.getBaseUrl());
             
-            // Create request DTO
+            // Crea el DTO de solicitud
             TransactionRequest request = new TransactionRequest(clientIdentification, accountNumber, amount);
             LOGGER.info("DTO de solicitud creado: " + request);
             
-            // Call backend API
+            // Llama a la API del backend
             LOGGER.info("Llamando restClient.submitTransaction...");
             ApiResponse<TransactionResponse> response = restClient.submitTransaction(request);
             LOGGER.info("Respuesta recibida: " + response);
             
             if (response.isSuccess() && !response.isError()) {
-                // Transaction successful
+                // Transaccion exitosa
                 transactionSuccess = true;
                 transactionId = response.getData().getTransactionId();
                 transactionStatus = response.getData().getStatus();
                 transactionResult = response.getData();
                 
-                // Show success notification
+                // Muestra notificacion de exito
                 FacesContext.getCurrentInstance().addMessage(null, 
                     new FacesMessage(FacesMessage.SEVERITY_INFO, 
                         "Éxito", response.getMessage() != null ? response.getMessage() : "Transacción procesada exitosamente"));
@@ -192,11 +192,11 @@ public class TransactionBean implements Serializable {
                 LOGGER.info("Transaccion exitosa: " + transactionId);
                 
             } else {
-                // Transaction failed
+                // Transaccion fallida
                 transactionSuccess = false;
                 errorMessage = response.getMessage();
                 
-                // Show error notification
+                // Muestra notificacion de error
                 FacesMessage.Severity severity = 
                     response.getCode().equals("VALIDATION_ERROR") ? 
                     FacesMessage.SEVERITY_WARN : FacesMessage.SEVERITY_ERROR;
@@ -226,12 +226,12 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Clear amount field only
+     * Limpia solo el campo de monto
      */
     public void clearForm() {
         amount = null;
         
-        // Reset transaction state
+        // Reinicia el estado de la transaccion
         processing = false;
         showResult = false;
         transactionSuccess = false;
@@ -244,7 +244,7 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Get transaction type text based on current amount
+     * Obtiene el texto del tipo de transaccion basado en el monto actual
      */
     public String getTransactionTypeText() {
         if (amount == null) {
@@ -259,8 +259,8 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Get current balance for the entered client and account
-     * This method can be called via AJAX when client ID and account number are entered
+     * Obtiene el saldo actual para el cliente y la cuenta ingresados
+     * Este metodo puede ser llamado via AJAX cuando se ingresan el ID de cliente y el numero de cuenta
      */
     public void checkBalance() {
         if (clientIdentification != null && !clientIdentification.trim().isEmpty() && accountNumber != null && !accountNumber.trim().isEmpty()) {
@@ -282,20 +282,20 @@ public class TransactionBean implements Serializable {
                 
             } catch (Exception e) {
                 LOGGER.warning("Error verificando saldo: " + e.getMessage());
-                // Don't show error to user as this is optional information
+                // No mostrar error al usuario ya que esta es informacion opcional
             }
         }
     }
     
     /**
-     * Check if the backend is healthy
+     * Verifica si el backend esta saludable
      */
     public boolean isBackendHealthy() {
         return restClient.isBackendHealthy();
     }
     
     /**
-     * Test method to show notification (for debugging)
+     * Metodo de prueba para mostrar notificacion (para depuracion)
      */
     public void testNotification() {
         FacesContext.getCurrentInstance().addMessage(null, 
@@ -305,20 +305,20 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Debug method - test transaction with fixed data
+     * Metodo de depuracion - prueba la transaccion con datos fijos
      */
     public void testTransactionWithFixedData() {
         LOGGER.info("=== Testing transaction with fixed data ===");
         
         try {
-            // Set fixed test data that complies with backend validation
+            // Establece datos de prueba fijos que cumplen con la validacion del backend
             this.clientIdentification = "12345678";
-            this.accountNumber = "ACC-123456"; // Backend expects ACC-XXXXXX format (10 chars)
+            this.accountNumber = "ACC-123456"; // El backend espera el formato ACC-XXXXXX (10 caracteres)
             this.amount = new BigDecimal("100.50");
             
             LOGGER.info("Set test data - Client: " + clientIdentification + ", Account: " + accountNumber + ", Amount: " + amount);
             
-            // Call process transaction directly
+            // Llama a processTransaction directamente
             processTransaction();
             
         } catch (Exception e) {
@@ -330,7 +330,7 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Test backend connectivity
+     * Prueba la conectividad con el backend
      */
     public void testBackendConnection() {
         LOGGER.info("=== Testing backend connection ===");
@@ -368,7 +368,6 @@ public class TransactionBean implements Serializable {
         }
     }
     
-    // Getters and setters
     public String getClientIdentification() {
         return clientIdentification;
     }
@@ -450,21 +449,21 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Getter for restClient (for testing)
+     * Getter para restClient (para pruebas)
      */
     public TransactionRestClient getRestClient() {
         return restClient;
     }
     
     /**
-     * Setter for restClient (for testing)
+     * Setter para restClient (para pruebas)
      */
     public void setRestClient(TransactionRestClient restClient) {
         this.restClient = restClient;
     }
     
     /**
-     * Get transaction type based on amount
+     * Obtiene el tipo de transaccion basado en el monto
      */
     public String getTransactionType() {
         if (amount == null) {
@@ -479,29 +478,29 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Debug method - test backend connectivity
+     * Metodo de depuracion - prueba la conectividad con el backend
      */
     public void testBackendConnectivity() {
         testBackendConnection();
     }
     
     /**
-     * Debug method - process with fixed data
+     * Metodo de depuracion - procesa con datos fijos
      */
     public void processWithFixedData() {
         LOGGER.info("=== Procesar con datos fijos ===");
         
-        // Set fixed test data
+        // Establece datos de prueba fijos
         this.clientIdentification = "DEBUG-CLIENT";
         this.accountNumber = "DEBUG-ACCOUNT";
         this.amount = new BigDecimal("999.99");
         
-        // Process transaction
+        // Procesa la transaccion
         processTransaction();
     }
     
     /**
-     * Debug method - test success notification
+     * Metodo de depuracion - prueba la notificacion de exito
      */
     public void testSuccessNotification() {
         this.transactionSuccess = true;
@@ -512,7 +511,7 @@ public class TransactionBean implements Serializable {
     }
     
     /**
-     * Debug method - test error notification
+     * Metodo de depuracion - prueba la notificacion de error
      */
     public void testErrorNotification() {
         this.transactionSuccess = false;

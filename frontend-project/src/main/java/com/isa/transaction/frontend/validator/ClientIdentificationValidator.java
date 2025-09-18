@@ -8,8 +8,8 @@ import jakarta.faces.validator.Validator;
 import jakarta.faces.validator.ValidatorException;
 
 /**
- * Custom JSF validator for client identification format validation.
- * Validates that client identification is not empty and within length constraints.
+ * Validador JSF personalizado para la validacion del formato de identificacion del cliente.
+ * Valida que la identificacion del cliente no este vacia y este dentro de las restricciones de longitud.
  */
 @FacesValidator("clientIdentificationValidator")
 public class ClientIdentificationValidator implements Validator<String> {
@@ -19,7 +19,7 @@ public class ClientIdentificationValidator implements Validator<String> {
     @Override
     public void validate(FacesContext context, UIComponent component, String value) throws ValidatorException {
         if (value == null || value.trim().isEmpty()) {
-            // This is handled by required="true" but as a safeguard:
+            // Esto es manejado por required="true" pero como una salvaguarda:
             FacesMessage message = new FacesMessage(
                 FacesMessage.SEVERITY_ERROR,
                 "Error de Validación",
@@ -38,15 +38,5 @@ public class ClientIdentificationValidator implements Validator<String> {
             );
             throw new ValidatorException(message);
         }
-        
-        // Example of a pattern validation that could be added:
-        // if (!trimmedValue.matches("^[a-zA-Z0-9-]*$")) {
-        //     FacesMessage message = new FacesMessage(
-        //         FacesMessage.SEVERITY_ERROR,
-        //         "Error de Formato",
-        //         "La identificación del cliente solo puede contener letras, números y guiones."
-        //     );
-        //     throw new ValidatorException(message);
-        // }
     }
 }
