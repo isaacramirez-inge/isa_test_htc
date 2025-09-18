@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<faces-config xmlns="https://jakarta.ee/xml/ns/jakartaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-facesconfig_4_0.xsd"
+              version="4.0">
+
+    <!-- Application Configuration -->
+    <application>
+        <message-bundle>messages</message-bundle>
+        <locale-config>
+            <default-locale>es</default-locale>
+            <supported-locale>es</supported-locale>
+            <supported-locale>en</supported-locale>
+        </locale-config>
+        <resource-bundle>
+            <base-name>messages</base-name>
+            <var>msgs</var>
+        </resource-bundle>
+    </application>
+
+    <!-- Login Navigation Rule -->
+    <navigation-rule>
+        <from-view-id>/login.xhtml</from-view-id>
+        <navigation-case>
+            <from-outcome>login-success</from-outcome>
+            <to-view-id>/transacciones.xhtml</to-view-id>
+            <redirect />
+        </navigation-case>
+        <navigation-case>
+            <from-outcome>login-failure</from-outcome>
+            <to-view-id>/login.xhtml</to-view-id>
+        </navigation-case>
+    </navigation-rule>
+
+    <!-- Navigation Rules for MVC Pattern -->
+    <navigation-rule>
+        <from-view-id>/transacciones.xhtml</from-view-id>
+        
+        <!-- Logout Navigation -->
+        <navigation-case>
+            <from-outcome>logout-success</from-outcome>
+            <to-view-id>/login.xhtml</to-view-id>
+            <redirect />
+        </navigation-case>
+
+        <!-- Transaction Success Navigation -->
+        <navigation-case>
+            <from-outcome>transaction-success</from-outcome>
+            <to-view-id>/transacciones.xhtml</to-view-id>
+            <redirect />
+        </navigation-case>
+        
+        <!-- Transaction Error Navigation -->
+        <navigation-case>
+            <from-outcome>transaction-error</from-outcome>
+            <to-view-id>/transacciones.xhtml</to-view-id>
+        </navigation-case>
+        
+        <!-- Validation Error Navigation -->
+        <navigation-case>
+            <from-outcome>validation-error</from-outcome>
+            <to-view-id>/transacciones.xhtml</to-view-id>
+        </navigation-case>
+        
+        <!-- Stay on same page for Ajax operations -->
+        <navigation-case>
+            <from-outcome>stay</from-outcome>
+            <to-view-id>/transacciones.xhtml</to-view-id>
+        </navigation-case>
+    </navigation-rule>
+
+    <!-- Global Navigation Rules -->
+    <navigation-rule>
+        <!-- Error page navigation -->
+        <navigation-case>
+            <from-outcome>error</from-outcome>
+            <to-view-id>/error.xhtml</to-view-id>
+        </navigation-case>
+        
+        <!-- Home page navigation -->
+        <navigation-case>
+            <from-outcome>home</from-outcome>
+            <to-view-id>/transacciones.xhtml</to-view-id>
+            <redirect />
+        </navigation-case>
+    </navigation-rule>
+
+    <!-- Custom Validators -->
+    <validator>
+        <validator-id>accountNumberValidator</validator-id>
+        <validator-class>com.isa.transaction.frontend.validator.AccountNumberValidator</validator-class>
+    </validator>
+    
+    <validator>
+        <validator-id>clientIdentificationValidator</validator-id>
+        <validator-class>com.isa.transaction.frontend.validator.ClientIdentificationValidator</validator-class>
+    </validator>
+
+    <validator>
+        <validator-id>amountValidator</validator-id>
+        <validator-class>com.isa.transaction.frontend.validator.AmountValidator</validator-class>
+    </validator>
+
+    <!-- Custom Converters -->
+    <converter>
+        <converter-id>transactionTypeConverter</converter-id>
+        <converter-class>com.isa.transaction.frontend.converter.TransactionTypeConverter</converter-class>
+    </converter>
+
+</faces-config>

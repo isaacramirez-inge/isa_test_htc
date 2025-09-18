@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+    
+<f:metadata>
+    <f:viewParam name="v" value="v1.0_20250918_001700" />
+</f:metadata>
+    
+<h:head>
+    <title>Sistema de Transacciones</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        .card-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .field-error {
+            color: #e74c3c;
+            font-size: 0.875em;
+            margin-top: 5px;
+            display: block;
+        }
+        
+        .transaction-type {
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .transaction-type.deposit {
+            color: #2ecc71;
+        }
+        
+        .transaction-type.withdrawal {
+            color: #e74c3c;
+        }
+        
+        .version {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.75em;
+            color: #666;
+            background: rgba(255,255,255,0.8);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+    </style>
+</h:head>
+
+<h:body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Sistema de Transacciones</h2>
+            </div>
+            
+            <h:form id="transactionForm">
+                <!-- Notificaciones -->
+                <p:growl id="growl" showDetail="true" life="5000" />
+                
+                <!-- Loading -->
+                <p:blockUI block="@form" widgetVar="blockUI">
+                    <i class="pi pi-spin pi-spinner" style="font-size: 2rem" />
+                    <br />Procesando...
+                </p:blockUI>
+                
+                <!-- Campo 1: Identificación del Cliente -->
+                <div class="form-group">
+                    <label class="form-label" for="clientId">Identificación del Cliente:</label>
+                    <p:inputText id="clientId" 
+                                 value="#{transactionBean.clientIdentification}" 
+                                 placeholder="Ingrese la identificación del cliente"
+                                 style="width: 100%" />
+                    <p:message for="clientId" styleClass="field-error" />
+                </div>
+                
+                <!-- Campo 2: Número de Cuenta -->
+                <div class="form-group">
+                    <label class="form-label" for="accountNum">Número de Cuenta:</label>
+                    <p:inputText id="accountNum" 
+                                 value="#{transactionBean.accountNumber}" 
+                                 placeholder="Formato: ACC-123456 (10 caracteres)"
+                                 style="width: 100%" />
+                    <p:message for="accountNum" styleClass="field-error" />
+                </div>
+                
+                <!-- Campo 3: Monto -->
+                <div class="form-group">
+                    <label class="form-label" for="amount">Monto:</label>
+                    <p:inputNumber id="amount" 
+                                   value="#{transactionBean.amount}" 
+                                   placeholder="0.00"
+                                   decimalPlaces="2"
+                                   style="width: 100%">
+                        <p:ajax event="blur" update="transactionType" />
+                    </p:inputNumber>
+                    <p:message for="amount" styleClass="field-error" />
+                    <small style="color: #666; margin-top: 5px; display: block;">
+                        Monto positivo para depósito, negativo para retiro
+                    </small>
+                </div>
+                
+                <!-- Tipo de Transacción -->
+                <div class="form-group">
+                    <span>Tipo:</span>
+                    <h:outputText id="transactionType" 
+                                  value="#{transactionBean.transactionTypeText}"
+                                  styleClass="transaction-type #{transactionBean.amount != null and transactionBean.amount.doubleValue() gt 0 ? 'deposit' : (transactionBean.amount != null and transactionBean.amount.doubleValue() lt 0 ? 'withdrawal' : '')}" />
+                </div>
+                
+                <!-- Botón Procesar -->
+                <div class="form-group" style="text-align: center; margin-top: 30px;">
+                    <p:commandButton value="Procesar Transacción"
+                                     action="#{transactionBean.processTransaction}"
+                                     update="@form"
+                                     onstart="PF('blockUI').show()"
+                                     oncomplete="PF('blockUI').hide()"
+                                     styleClass="p-button-success"
+                                     style="width: 100%; padding: 12px;" />
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="form-group" style="text-align: center; margin-top: 10px;">
+                    <p:commandButton value="Limpiar"
+                                     action="#{transactionBean.clearForm}"
+                                     update="@form"
+                                     immediate="true"
+                                     styleClass="p-button-secondary"
+                                     style="width: 24%; padding: 6px; margin-right: 1%;" />
+                    <p:commandButton value="Test Notif."
+                                     action="#{transactionBean.testNotification}"
+                                     update="growl"
+                                     immediate="true"
+                                     styleClass="p-button-info"
+                                     style="width: 24%; padding: 6px; margin-right: 1%;" />
+                    <p:commandButton value="Test Backend"
+                                     action="#{transactionBean.testBackendConnection}"
+                                     update="growl"
+                                     immediate="true"
+                                     styleClass="p-button-warning"
+                                     style="width: 24%; padding: 6px; margin-right: 1%;" />
+                    <p:commandButton value="Test Fixed Data"
+                                     action="#{transactionBean.testTransactionWithFixedData}"
+                                     update="@form"
+                                     immediate="true"
+                                     styleClass="p-button-help"
+                                     style="width: 24%; padding: 6px;" />
+                </div>
+            </h:form>
+        </div>
+    </div>
+    
+    <!-- Versión del despliegue -->
+    <div class="version">
+        v1.0_#{facesContext.externalContext.initParameterMap['app.version'] != null ? facesContext.externalContext.initParameterMap['app.version'] : '20250918_000600'}
+    </div>
+</h:body>
+</html>

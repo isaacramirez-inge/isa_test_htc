@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<f:loadBundle basename="messages" var="msgs" />
+
+<h:head>
+    <title>#{msgs['login.title']}</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        .login-panel {
+            width: 350px;
+            margin: 100px auto;
+        }
+        .login-button {
+            width: 100%;
+        }
+    </style>
+</h:head>
+
+<h:body>
+    <p:panel header="#{msgs['login.title']}" styleClass="login-panel">
+        <h:form id="loginForm">
+            <p:messages id="messages" showDetail="true" closable="true" autoUpdate="true" />
+            <h:panelGroup rendered="#{not empty param['logout']}">
+                <p:message for="logoutMessage" severity="info" showDetail="true" />
+                <h:outputText id="logoutMessage" value="#{msgs['login.loggedOut']}" style="display:none" />
+            </h:panelGroup>
+            <h:panelGrid columns="2" cellpadding="5">
+                <p:outputLabel for="username" value="#{msgs['login.username']}:" />
+                <p:inputText id="username" value="#{loginBean.username}" required="true" requiredMessage="#{msgs['login.required']}" />
+
+                <p:outputLabel for="password" value="#{msgs['login.password']}:" />
+                <p:password id="password" value="#{loginBean.password}" required="true" requiredMessage="#{msgs['login.required']}" feedback="false" />
+
+                <f:facet name="footer">
+                    <p:commandButton id="loginButton" value="#{msgs['login.button']}" action="#{loginBean.login}" ajax="false" styleClass="login-button" update="@form" />
+                </f:facet>
+            </h:panelGrid>
+        </h:form>
+    </p:panel>
+</h:body>
+</html>
